@@ -202,7 +202,7 @@ public class AspectProxyFactoryTests {
 
 	@Aspect
 	public static class LoggingAspectOnSetter {
-
+		//
 		@Around("execution(* setAge(*))")
 		public Object doLog(ProceedingJoinPoint pjp) throws Throwable {
 			LogFactory.getLog(LoggingAspectOnSetter.class).debug(Arrays.asList(pjp.getArgs()));
