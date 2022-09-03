@@ -80,10 +80,13 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 	 * @return the list of {@link org.springframework.aop.Advisor} beans
 	 * @see #isEligibleBean
 	 */
+	// 构建Aspect
 	public List<Advisor> buildAspectJAdvisors() {
+		// 初始的时候,aspectBeanNames是null
 		List<String> aspectNames = this.aspectBeanNames;
 
 		if (aspectNames == null) {
+			// 首先
 			synchronized (this) {
 				aspectNames = this.aspectBeanNames;
 				if (aspectNames == null) {
@@ -91,8 +94,11 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 					aspectNames = new ArrayList<>();
 					String[] beanNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 							this.beanFactory, Object.class, true, false);
+					// 获取所有bean
 					for (String beanName : beanNames) {
+						//
 						if (!isEligibleBean(beanName)) {
+							// 通过AnnotationAwareAspectJAutoProxyCreator的 includePatterns 规则校验
 							continue;
 						}
 						// We must be careful not to instantiate beans eagerly as in this case they

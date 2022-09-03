@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -32,6 +33,8 @@ import org.springframework.context.annotation6.ConfigForScanning;
 import org.springframework.context.annotation6.Jsr330NamedForScanning;
 import org.springframework.core.ResolvableType;
 import org.springframework.util.ObjectUtils;
+
+import javax.annotation.PostConstruct;
 
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,6 +48,7 @@ import static org.springframework.util.StringUtils.uncapitalize;
 @SuppressWarnings("resource")
 class AnnotationConfigApplicationContextTests {
 
+	// liud 注解启动容器
 	@Test
 	void scanAndRefresh() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
@@ -61,12 +65,17 @@ class AnnotationConfigApplicationContextTests {
 
 	@Test
 	void registerAndRefresh() {
+		// 在这一步会注册ConfigurationClassPostProcessor等beanDefinition
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+		// 不加@Bean @Component 等注解 register后的class 会被容器管理吗?? TODO
 		context.register(Config.class, NameConfig.class);
 		context.refresh();
 
 		context.getBean("testBean");
 		context.getBean("name");
+		// liud add
+		Object serviceA = context.getBean("serviceA");
+
 		Map<String, Object> beans = context.getBeansWithAnnotation(Configuration.class);
 		assertThat(beans).hasSize(2);
 	}
@@ -99,7 +108,7 @@ class AnnotationConfigApplicationContextTests {
 		Class<?> targetType = Pattern.class;
 		assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() ->
 				context.getBean(targetType))
-			.withMessageContaining(format("No qualifying bean of type '%s'", targetType.getName()));
+				.withMessageContaining(format("No qualifying bean of type '%s'", targetType.getName()));
 	}
 
 	@Test
@@ -107,13 +116,14 @@ class AnnotationConfigApplicationContextTests {
 		ApplicationContext context = new AnnotationConfigApplicationContext(TwoTestBeanConfig.class);
 		assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() ->
 				context.getBean(TestBean.class))
-			.withMessageContaining("No qualifying bean of type '" + TestBean.class.getName() + "'")
-			.withMessageContaining("tb1")
-			.withMessageContaining("tb2");
+				.withMessageContaining("No qualifying bean of type '" + TestBean.class.getName() + "'")
+				.withMessageContaining("tb1")
+				.withMessageContaining("tb2");
 	}
 
 	/**
 	 * Tests that Configuration classes are registered according to convention
+	 *
 	 * @see org.springframework.beans.factory.support.DefaultBeanNameGenerator#generateBeanName
 	 */
 	@Test
@@ -160,6 +170,7 @@ class AnnotationConfigApplicationContextTests {
 				bean.getClass().getName();
 				return bean;
 			}
+
 			@Override
 			public Object postProcessAfterInitialization(Object bean, String beanName) {
 				bean.getClass().getName();
@@ -208,9 +219,9 @@ class AnnotationConfigApplicationContextTests {
 		assertThat(context.getBean(BeanB.class).applicationContext).isSameAs(context);
 
 		assertThat(context.getDefaultListableBeanFactory().getDependentBeans("annotationConfigApplicationContextTests.BeanB"))
-			.containsExactly("annotationConfigApplicationContextTests.BeanA");
+				.containsExactly("annotationConfigApplicationContextTests.BeanA");
 		assertThat(context.getDefaultListableBeanFactory().getDependentBeans("annotationConfigApplicationContextTests.BeanC"))
-			.containsExactly("annotationConfigApplicationContextTests.BeanA");
+				.containsExactly("annotationConfigApplicationContextTests.BeanA");
 	}
 
 	@Test
@@ -393,6 +404,18 @@ class AnnotationConfigApplicationContextTests {
 
 	@Configuration
 	static class Config {
+		// ServiceA ServiceB 是循环引用的测试类
+		@Bean
+		ServiceA serviceA() {
+			ServiceA serviceA = new ServiceA();
+			return serviceA;
+		}
+
+		@Bean
+		ServiceB serviceB() {
+			ServiceB serviceB = new ServiceB();
+			return serviceB;
+		}
 
 		@Bean
 		TestBean testBean() {
@@ -414,11 +437,13 @@ class AnnotationConfigApplicationContextTests {
 	@Configuration
 	static class TwoTestBeanConfig {
 
-		@Bean TestBean tb1() {
+		@Bean
+		TestBean tb1() {
 			return new TestBean();
 		}
 
-		@Bean TestBean tb2() {
+		@Bean
+		TestBean tb2() {
 			return new TestBean();
 		}
 	}
@@ -426,16 +451,21 @@ class AnnotationConfigApplicationContextTests {
 	@Configuration
 	static class NameConfig {
 
-		@Bean String name() { return "foo"; }
+		@Bean
+		String name() {
+			return "foo";
+		}
 	}
 
 	@Configuration
 	@Import(NameConfig.class)
 	static class AutowiredConfig {
 
-		@Autowired String autowiredName;
+		@Autowired
+		String autowiredName;
 
-		@Bean TestBean testBean() {
+		@Bean
+		TestBean testBean() {
 			TestBean testBean = new TestBean();
 			testBean.name = autowiredName;
 			return testBean;
@@ -457,13 +487,15 @@ class AnnotationConfigApplicationContextTests {
 
 	static class BeanB {
 
-		@Autowired ApplicationContext applicationContext;
+		@Autowired
+		ApplicationContext applicationContext;
 
 		public BeanB() {
 		}
 	}
 
-	static class BeanC {}
+	static class BeanC {
+	}
 
 	static class NonInstantiatedFactoryBean implements FactoryBean<String> {
 
@@ -522,6 +554,26 @@ class AnnotationConfigApplicationContextTests {
 			return false;
 		}
 	}
+
+	static class ServiceA implements InitializingBean {
+
+		@PostConstruct
+		public void postc(){
+
+		}
+		@Autowired
+		ServiceB serviceB;
+
+		@Override
+		public void afterPropertiesSet() throws Exception {
+			System.out.println("init method");
+		}
+	}
+
+	static class ServiceB {
+		@Autowired
+		ServiceA serviceA;
+	}
 }
 
 class TestBean {
@@ -548,8 +600,7 @@ class TestBean {
 		if (name == null) {
 			if (other.name != null)
 				return false;
-		}
-		else if (!name.equals(other.name))
+		} else if (!name.equals(other.name))
 			return false;
 		return true;
 	}

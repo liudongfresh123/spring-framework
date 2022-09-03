@@ -66,10 +66,12 @@ public class BeanFactoryAdvisorRetrievalHelper {
 	 */
 	public List<Advisor> findAdvisorBeans() {
 		// Determine list of advisor bean names, if not cached already.
+		// 第一次进来 cachedAdvisorBeanNames 是空的
 		String[] advisorNames = this.cachedAdvisorBeanNames;
 		if (advisorNames == null) {
 			// Do not initialize FactoryBeans here: We need to leave all regular beans
 			// uninitialized to let the auto-proxy creator apply to them!
+			// beanFactory中获取所有的Advisor
 			advisorNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 					this.beanFactory, Advisor.class, true, false);
 			this.cachedAdvisorBeanNames = advisorNames;
@@ -82,15 +84,15 @@ public class BeanFactoryAdvisorRetrievalHelper {
 		for (String name : advisorNames) {
 			if (isEligibleBean(name)) {
 				if (this.beanFactory.isCurrentlyInCreation(name)) {
+					// 正在创建中的 跳过
 					if (logger.isTraceEnabled()) {
 						logger.trace("Skipping currently created advisor '" + name + "'");
 					}
-				}
-				else {
+				} else {
 					try {
+						// beanFactory获取指定name的Advisor
 						advisors.add(this.beanFactory.getBean(name, Advisor.class));
-					}
-					catch (BeanCreationException ex) {
+					} catch (BeanCreationException ex) {
 						Throwable rootCause = ex.getMostSpecificCause();
 						if (rootCause instanceof BeanCurrentlyInCreationException) {
 							BeanCreationException bce = (BeanCreationException) rootCause;

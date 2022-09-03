@@ -75,8 +75,11 @@ public class ClassPathXmlApplicationContextTests {
 
 	@Test
 	public void testSingleConfigLocation() {
+		// liud  xml test
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(FQ_SIMPLE_CONTEXT);
 		assertThat(ctx.containsBean("someMessageSource")).isTrue();
+		Object someMessageSource = ctx.getBean("someMessageSource");
+		System.out.println("someMessageSource");
 		ctx.close();
 	}
 

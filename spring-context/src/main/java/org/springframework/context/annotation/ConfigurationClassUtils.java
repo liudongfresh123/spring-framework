@@ -95,8 +95,7 @@ abstract class ConfigurationClassUtils {
 				className.equals(((AnnotatedBeanDefinition) beanDef).getMetadata().getClassName())) {
 			// Can reuse the pre-parsed metadata from the given BeanDefinition...
 			metadata = ((AnnotatedBeanDefinition) beanDef).getMetadata();
-		}
-		else if (beanDef instanceof AbstractBeanDefinition && ((AbstractBeanDefinition) beanDef).hasBeanClass()) {
+		} else if (beanDef instanceof AbstractBeanDefinition && ((AbstractBeanDefinition) beanDef).hasBeanClass()) {
 			// Check already loaded Class if present...
 			// since we possibly can't even load the class file for this Class.
 			Class<?> beanClass = ((AbstractBeanDefinition) beanDef).getBeanClass();
@@ -107,8 +106,7 @@ abstract class ConfigurationClassUtils {
 				return false;
 			}
 			metadata = AnnotationMetadata.introspect(beanClass);
-		}
-		else {
+		} else {
 			try {
 				MetadataReader metadataReader = metadataReaderFactory.getMetadataReader(className);
 				metadata = metadataReader.getAnnotationMetadata();
@@ -125,8 +123,7 @@ abstract class ConfigurationClassUtils {
 		Map<String, Object> config = metadata.getAnnotationAttributes(Configuration.class.getName());
 		if (config != null && !Boolean.FALSE.equals(config.get("proxyBeanMethods"))) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
-		}
-		else if (config != null || isConfigurationCandidate(metadata)) {
+		} else if (config != null || isConfigurationCandidate(metadata)) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
 		}
 		else {

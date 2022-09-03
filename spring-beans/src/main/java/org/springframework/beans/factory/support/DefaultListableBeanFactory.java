@@ -492,6 +492,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	@Override
 	public String[] getBeanNamesForType(@Nullable Class<?> type, boolean includeNonSingletons, boolean allowEagerInit) {
 		if (!isConfigurationFrozen() || type == null || !allowEagerInit) {
+			//
 			return doGetBeanNamesForType(ResolvableType.forRawClass(type), includeNonSingletons, allowEagerInit);
 		}
 		Map<Class<?>, String[]> cache =
@@ -511,6 +512,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		List<String> result = new ArrayList<>();
 
 		// Check all bean definitions.
+		// 检查所有的bean定义
 		for (String beanName : this.beanDefinitionNames) {
 			// Only consider bean as eligible if the bean name is not defined as alias for some other bean.
 			if (!isAlias(beanName)) {
@@ -874,7 +876,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		for (String beanName : beanNames) {
 			RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
 			if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
+				// 非Abstract&单例&非懒加载
 				if (isFactoryBean(beanName)) {
+					// 工厂bean
 					Object bean = getBean(FACTORY_BEAN_PREFIX + beanName);
 					if (bean instanceof FactoryBean) {
 						FactoryBean<?> factory = (FactoryBean<?>) bean;
@@ -892,14 +896,15 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 							getBean(beanName);
 						}
 					}
-				}
-				else {
+				} else {
+					// 获取bean
 					getBean(beanName);
 				}
 			}
 		}
 
 		// Trigger post-initialization callback for all applicable beans...
+		// 所有单例bean实例化后的方法
 		for (String beanName : beanNames) {
 			Object singletonInstance = getSingleton(beanName);
 			if (singletonInstance instanceof SmartInitializingSingleton) {
@@ -1047,6 +1052,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		destroySingleton(beanName);
 
 		// Notify all post-processors that the specified bean definition has been reset.
+		// // BeanPostProcessors
 		for (BeanPostProcessor processor : getBeanPostProcessors()) {
 			if (processor instanceof MergedBeanDefinitionPostProcessor) {
 				((MergedBeanDefinitionPostProcessor) processor).resetBeanDefinition(beanName);

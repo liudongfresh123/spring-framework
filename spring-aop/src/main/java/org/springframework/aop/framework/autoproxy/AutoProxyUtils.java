@@ -128,8 +128,11 @@ public abstract class AutoProxyUtils {
 	static boolean isOriginalInstance(String beanName, Class<?> beanClass) {
 		if (!StringUtils.hasLength(beanName) || beanName.length() !=
 				beanClass.getName().length() + AutowireCapableBeanFactory.ORIGINAL_INSTANCE_SUFFIX.length()) {
+			// 没有长度 或者长度不等于class的长度加上后缀长度
+			// 返回false  不是原始对象
 			return false;
 		}
+		// 长度符合之后 在比较值一样不一样
 		return (beanName.startsWith(beanClass.getName()) &&
 				beanName.endsWith(AutowireCapableBeanFactory.ORIGINAL_INSTANCE_SUFFIX));
 	}

@@ -163,6 +163,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 		this.registry = registry;
 
 		if (useDefaultFilters) {
+			// 注册了一个默认的扫描路径时的包含过滤器(@Component)
 			registerDefaultFilters();
 		}
 		setEnvironment(environment);
@@ -273,18 +274,24 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 		Assert.notEmpty(basePackages, "At least one base package must be specified");
 		Set<BeanDefinitionHolder> beanDefinitions = new LinkedHashSet<>();
 		for (String basePackage : basePackages) {
+			// 扫描的核心方法 findCandidateComponents
 			Set<BeanDefinition> candidates = findCandidateComponents(basePackage);
+			// 遍历扫描出的bean定义
 			for (BeanDefinition candidate : candidates) {
 				ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(candidate);
 				candidate.setScope(scopeMetadata.getScopeName());
 				String beanName = this.beanNameGenerator.generateBeanName(candidate, this.registry);
 				if (candidate instanceof AbstractBeanDefinition) {
+					//
 					postProcessBeanDefinition((AbstractBeanDefinition) candidate, beanName);
 				}
 				if (candidate instanceof AnnotatedBeanDefinition) {
+					// 解析@Lazy @Primary @DependsOn  @Role @Description等注解
 					AnnotationConfigUtils.processCommonDefinitionAnnotations((AnnotatedBeanDefinition) candidate);
 				}
+				// 检查是否存在相同名称的
 				if (checkCandidate(beanName, candidate)) {
+					//
 					BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(candidate, beanName);
 					definitionHolder =
 							AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
@@ -334,6 +341,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 */
 	protected boolean checkCandidate(String beanName, BeanDefinition beanDefinition) throws IllegalStateException {
 		if (!this.registry.containsBeanDefinition(beanName)) {
+			// 没有这个名称的bean 返回true
 			return true;
 		}
 		BeanDefinition existingDef = this.registry.getBeanDefinition(beanName);
@@ -342,8 +350,10 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 			existingDef = originatingDef;
 		}
 		if (isCompatible(beanDefinition, existingDef)) {
+			// 兼容的话 返回false ,不会添加到beanDefinitionMap中
 			return false;
 		}
+		// 不兼容 就会直接抛异常
 		throw new ConflictingBeanDefinitionException("Annotation-specified bean name '" + beanName +
 				"' for bean class [" + beanDefinition.getBeanClassName() + "] conflicts with existing, " +
 				"non-compatible bean definition of same name and class [" + existingDef.getBeanClassName() + "]");
