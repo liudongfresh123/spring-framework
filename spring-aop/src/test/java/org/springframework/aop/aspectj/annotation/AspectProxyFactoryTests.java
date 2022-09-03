@@ -45,6 +45,7 @@ public class AspectProxyFactoryTests {
 				proxyFactory.addAspect(TestBean.class));
 	}
 
+	// liud aop
 	@Test
 	public void testWithSimpleAspect() throws Exception {
 		TestBean bean = new TestBean();
@@ -55,6 +56,8 @@ public class AspectProxyFactoryTests {
 		assertThat(proxy.getAge()).as("Multiplication did not occur").isEqualTo((bean.getAge() * 2));
 	}
 
+
+	// liud   aop
 	@Test
 	public void testWithPerThisAspect() throws Exception {
 		TestBean bean1 = new TestBean();
